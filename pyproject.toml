@@ -1,0 +1,45 @@
+[project]
+name = "sunmosaic"
+version = "0.1.0"
+description = "Stitch partial H-alpha views of the Sun into a single full-disk mosaic"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0",
+    "opencv-python-headless>=4.10,<6",
+    "tifffile>=2024.1",
+    "imagecodecs",
+    "streamlit>=1.40",
+    "psdtags>=2026.1.29",
+]
+
+[project.scripts]
+sunmosaic = "sunmosaic.cli:main"
+sunmosaic-ui = "sunmosaic.launch:main"
+sunmosaic-app = "sunmosaic.desktop:main"
+
+[project.optional-dependencies]
+desktop = [
+    "pywebview>=6",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sunmosaic"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# round() on a numpy scalar returns a numpy float, so the int() calls are load bearing.
+ignore = ["RUF046"]
