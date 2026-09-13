@@ -42,7 +42,9 @@ from sunmosaic.io import (
 from sunmosaic.pipeline import stitch
 from sunmosaic.types import MosaicResult, Params
 
-DEFAULT_FOLDER = str(Path.home() / "Documents" / "Astronomy" / "SunMosaic")
+# Shown with ~ so the account name never appears on screen or in screenshots; both folder
+# boxes expand it before use.
+DEFAULT_FOLDER = "~/Documents/Astronomy/SunMosaic"
 FINISH_WIDGETS = {"finish_flip": False, "finish_rotate": 0.0}
 
 st.set_page_config(page_title="SunMosaic", page_icon="☉", layout="wide")
