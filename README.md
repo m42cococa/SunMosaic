@@ -55,13 +55,27 @@ uv run python packaging/build_app.py
 
 The build takes about a minute and writes two files to `dist/`:
 
-| File | Size |
-| --- | --- |
-| `SunMosaic.app` | about 560 MB |
-| `SunMosaic-0.1.0-arm64.dmg` | about 230 MB |
+| File | What it is | Size |
+| --- | --- | --- |
+| `SunMosaic.app` | The application itself. Double-click it to run SunMosaic on this Mac. | about 560 MB |
+| `SunMosaic-0.1.0-arm64.dmg` | A disk image: one compressed file holding a copy of the app, for installing it here or on another Mac. | about 230 MB |
 
-Open the disk image and drag SunMosaic onto the Applications shortcut beside it. The app opens
-in its own window; closing the window, or quitting from the menu or the Dock, stops it.
+Finder shows `SunMosaic.app` as a single icon, but it is a folder holding the program, its own
+Python and every library. The disk image runs nothing by itself; it only carries the app.
+
+To install SunMosaic from the disk image:
+
+1. Double-click the `.dmg` file. It opens in Finder like a small removable disk, showing
+   SunMosaic and a shortcut to your Applications folder.
+2. Drag SunMosaic onto the Applications shortcut. This copies the app into Applications.
+3. Eject the disk image from the Finder sidebar. The `.dmg` file can then be deleted.
+4. Start SunMosaic from Applications or Launchpad.
+
+On the Mac that built it, the disk image is optional: you can also run `dist/SunMosaic.app`
+directly or drag it into Applications yourself.
+
+SunMosaic opens in its own window. Closing the window, or choosing Quit from the menu or the
+Dock, stops it.
 
 - **Start-up** takes a few seconds while the image libraries load.
 - **Downloads** open a save dialog. **Save straight to a folder** works as in the browser.
