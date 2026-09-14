@@ -64,7 +64,8 @@ def server_environment(port: int, base: dict[str, str] | None = None) -> dict[st
 def server_command(parent_pid: int | None = None) -> list[str]:
     """The child process: this module again, in server mode, told which process to outlive."""
     parent = os.getpid() if parent_pid is None else parent_pid
-    return [sys.executable, "-I", "-m", "sunmosaic.desktop", "--serve", str(parent)]
+    # -B, not PYTHONDONTWRITEBYTECODE: -I makes Python ignore that variable.
+    return [sys.executable, "-I", "-B", "-m", "sunmosaic.desktop", "--serve", str(parent)]
 
 
 def watch_parent(parent_pid: int, poll_s: float = PARENT_POLL_S) -> threading.Thread:

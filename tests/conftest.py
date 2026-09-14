@@ -9,14 +9,14 @@ import pytest
 
 from sunmosaic.synthetic import quadrant_case
 
-SAMPLE_DIR = Path(
-    os.environ.get("SUNMOSAIC_SAMPLES", Path.home() / "Documents" / "Astronomy" / "SunMosaic")
-)
+# The regression values are measured from the four frames in demo/, so the tests read those by
+# default rather than a working folder that may hold other frames.
+SAMPLE_DIR = Path(os.environ.get("SUNMOSAIC_SAMPLES", Path(__file__).resolve().parents[1] / "demo"))
 
 
 @pytest.fixture(scope="session")
 def sample_paths() -> list[str]:
-    """The four real H-alpha frames; the test is skipped when they are not installed."""
+    """The four real H-alpha frames from demo/; the test is skipped when they are missing."""
     if not SAMPLE_DIR.is_dir():
         pytest.skip(f"sample frames not found in {SAMPLE_DIR}")
     paths = sorted(str(p) for p in SAMPLE_DIR.glob("*.tif"))

@@ -49,6 +49,10 @@ SunMosaic can be packaged as a standalone application for Apple Silicon Macs, de
 disk image. The app carries its own Python and every dependency, so it runs without uv or a
 terminal.
 
+To skip the build, download the ready-made disk image from the
+[latest release](https://github.com/m42cococa/SunMosaic/releases/latest), then follow the
+install steps below.
+
 ```
 uv run python packaging/build_app.py
 ```
@@ -254,8 +258,8 @@ uv run pytest
 ```
 
 The suite covers synthetic frames with known offsets and gains, and regression values measured
-from the real sample frames. Tests that need the sample frames are skipped when they are absent;
-point `SUNMOSAIC_SAMPLES` at the folder holding them to run those elsewhere.
+from the four real frames in `demo/`, which the tests read by default. Point `SUNMOSAIC_SAMPLES`
+at another folder holding the same four frames to use a different copy.
 
 ## Reference
 

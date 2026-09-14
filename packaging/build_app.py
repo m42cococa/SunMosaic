@@ -30,6 +30,9 @@ PY_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 STDLIB_PRUNE = ["test", "idlelib", "ensurepip", "tkinter", "turtledemo", "lib2to3/tests"]
 LIB_PRUNE_GLOBS = ["tcl8*", "tk8*", "itcl*", "thread2*"]
 TEST_DIRS_IN = ["numpy", "pandas", "pyarrow"]
+# python-build-standalone's own build prefix, used in place of where uv put it on this Mac.
+NEUTRAL_PREFIX = b"/install"
+KEPT_EXECUTABLES = {"python", "python3", f"python{PY_VERSION}"}
 
 
 def run(*command: str | Path, **kwargs) -> subprocess.CompletedProcess:
@@ -73,7 +76,30 @@ def copy_python(target: Path) -> Path:
         for path in (target / "lib").glob(pattern):
             shutil.rmtree(path, ignore_errors=True)
     shutil.rmtree(target / "share", ignore_errors=True)
+    scrub_interpreter(target, base)
     return target / "bin" / f"python{PY_VERSION}"
+
+
+def scrub_interpreter(root: Path, original_prefix: Path) -> None:
+    """Remove where uv installed Python on this Mac from the copied interpreter.
+
+    uv records its install location, inside the builder's home folder, in the build
+    configuration files and as the shared library's install name. Python does not need either
+    to run, and shipping them would publish the builder's account name.
+    """
+    old = str(original_prefix).encode()
+    for path in root.rglob("*"):
+        if path.is_symlink() or not path.is_file():
+            continue
+        data = path.read_bytes()
+        # Only text files are edited. Binary formats store string lengths, so a shorter path
+        # would corrupt them: compiled bytecode is rebuilt later anyway, and the final check
+        # reports any binary that still holds the path.
+        if old in data and b"\x00" not in data:
+            path.write_bytes(data.replace(old, NEUTRAL_PREFIX))
+    library = root / "lib" / f"libpython{PY_VERSION}.dylib"
+    run("install_name_tool", "-id", f"@executable_path/../lib/{library.name}", library)
+    run("codesign", "--force", "--sign", "-", library)  # the edit invalidates its signature
 
 
 def install_packages(python: Path) -> None:
@@ -85,7 +111,16 @@ def install_packages(python: Path) -> None:
         "--requirement", requirements, cwd=ROOT)
     run("uv", "pip", "install", "--python", python, "--system", "--break-system-packages",
         "--no-deps", "--reinstall-package", "sunmosaic", ROOT, cwd=ROOT)
-    site = python.parent.parent / "lib" / f"python{PY_VERSION}" / "site-packages"
+    root = python.parent.parent
+    site = root / "lib" / f"python{PY_VERSION}" / "site-packages"
+    # Console scripts carry this Mac's bundle path in their first line, and the app never uses
+    # them; the launcher runs the interpreter directly.
+    for entry in python.parent.iterdir():
+        if entry.name not in KEPT_EXECUTABLES:
+            entry.unlink()
+    # The record of where each package came from names the project folder on this Mac.
+    for origin in site.glob("*.dist-info/direct_url.json"):
+        origin.unlink()
     for package in TEST_DIRS_IN:
         for tests in (site / package).rglob("tests"):
             if tests.is_dir():
@@ -93,8 +128,13 @@ def install_packages(python: Path) -> None:
     for cache in python.parent.parent.rglob("__pycache__"):
         shutil.rmtree(cache, ignore_errors=True)
     # Compile now, so nothing writes into the signed bundle when it runs.
-    subprocess.run([str(python), "-I", "-m", "compileall", "-q", "-j0",
-                    str(python.parent.parent / "lib" / f"python{PY_VERSION}")], check=False)
+    # Bytecode records the path it was compiled at; record it relative to the bundle instead.
+    # Python replaces that path with the real location when it loads a module anyway.
+    # -f rewrites every file, and -B stops the modules compileall itself imports from being
+    # cached first with this Mac's path and then skipped as already up to date.
+    subprocess.run([str(python), "-I", "-B", "-m", "compileall", "-q", "-f", "-j0", "-s", str(root),
+                    "-p", f"{APP_NAME}.app/Contents/Resources/python",
+                    str(root / "lib" / f"python{PY_VERSION}")], check=False)
 
 
 def write_launcher(macos: Path) -> None:
@@ -103,8 +143,8 @@ def write_launcher(macos: Path) -> None:
 # Starts SunMosaic with the Python carried inside this application.
 HERE="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"
 unset PYTHONHOME PYTHONPATH
-export PYTHONDONTWRITEBYTECODE=1  # the bundle is signed; never write into it
-exec "$HERE/../Resources/python/bin/python{PY_VERSION}" -I -m sunmosaic.desktop "$@"
+# -B below keeps Python from writing bytecode into the signed bundle; -I ignores this variable.
+exec "$HERE/../Resources/python/bin/python{PY_VERSION}" -I -B -m sunmosaic.desktop "$@"
 """)
     launcher.chmod(0o755)
 
@@ -177,10 +217,22 @@ def build_app(app_version: str) -> Path:
     write_launcher(macos)
     write_icon(resources)
     write_info_plist(contents, app_version)
+    check_no_home_paths(app)
     # Signing comes last: any later write would break the seal.
     run("codesign", "--force", "--deep", "--sign", "-", app)
     run("codesign", "--verify", "--deep", "--strict", app)
     return app
+
+
+def check_no_home_paths(app: Path) -> None:
+    """Stop the build if any file in the bundle still contains this Mac's home folder path."""
+    needle = str(Path.home()).encode()
+    found = [path for path in app.rglob("*")
+             if path.is_file() and not path.is_symlink() and needle in path.read_bytes()]
+    if found:
+        listing = "\n  ".join(str(path.relative_to(app)) for path in found[:20])
+        sys.exit(f"{len(found)} files in the bundle contain {needle.decode()}:\n  {listing}")
+    print(f"no file in the bundle contains {needle.decode()}")
 
 
 def build_dmg(app: Path, app_version: str) -> Path:

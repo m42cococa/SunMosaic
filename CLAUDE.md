@@ -9,8 +9,7 @@ with uv.
 
 ```
 uv sync                                         # set up the environment
-uv run pytest                                   # full suite, about 90 s
-SUNMOSAIC_SAMPLES="$PWD/demo" uv run pytest     # include the real-frame tests, using demo/
+uv run pytest                                   # full suite, about 2 min, real frames from demo/
 uv run ruff check src tests packaging           # lint; must stay clean
 uv run sunmosaic-ui                             # browser UI on http://localhost:8501
 uv run sunmosaic build demo/*.tif -o out.tif --preview out.png
@@ -56,9 +55,9 @@ uv run python packaging/build_app.py            # dist/SunMosaic.app and the .dm
 
 ## Tests
 
-- Real-frame tests use the `sample_paths` fixture. It reads `~/Documents/Astronomy/SunMosaic`
-  by default and skips when that folder is missing; `SUNMOSAIC_SAMPLES` points it elsewhere.
-  `demo/` holds identical copies of the four frames.
+- Real-frame tests use the `sample_paths` fixture, which reads the four frames in `demo/`.
+  Their expected values belong to exactly those frames, so never point it at the working folder
+  `~/Documents/Astronomy/SunMosaic`, which gains new frames. `SUNMOSAIC_SAMPLES` overrides it.
 - `test_app.py` drives the UI with Streamlit's AppTest. Give any widget a test touches a stable
   `key=`, because positional indexes shift when widgets are added.
 - `test_desktop.py` must never import pywebview; it is an optional extra.
@@ -70,8 +69,12 @@ uv run python packaging/build_app.py            # dist/SunMosaic.app and the .dm
 - The launcher is a bash script. The Streamlit server runs as a child,
   `python -m sunmosaic.desktop --serve <parent pid>`, and exits when its parent disappears,
   because Quit from the Dock ends the window process without running Python's exit handlers.
-- Signing is ad hoc and must be the last write to the bundle. Bytecode is precompiled and
-  `PYTHONDONTWRITEBYTECODE` is set, so a run never modifies the signed bundle. arm64 only.
+- Signing is ad hoc and must be the last write to the bundle. Bytecode is precompiled with
+  bundle-relative paths and Python runs with `-B` (`-I` ignores `PYTHONDONTWRITEBYTECODE`), so a
+  run never modifies the signed bundle. arm64 only.
+- The build fails if any file in the bundle contains the builder's home folder path, since the
+  disk image is published. Release downloads are GitHub Release assets; `dist/` is never
+  committed.
 - The server log is `~/Library/Logs/SunMosaic.log`.
 - On this Mac, screen capture and window inspection are not permitted to automation. Verify
   the app through its server port with Playwright, and its identity with `lsappinfo`.

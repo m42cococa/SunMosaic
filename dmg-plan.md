@@ -144,3 +144,20 @@ Screen capture is blocked, so the window itself, the upload open panel and the d
 panel were not seen. To check them, open SunMosaic and press **Upload** in the sidebar, then
 build a mosaic and press a download button. **Save straight to a folder** and the folder picker
 do not go through the window's panels and were verified.
+
+## Published: v0.1.0 (2026-09-13)
+
+The disk image is attached to the GitHub Release
+[v0.1.0](https://github.com/m42cococa/SunMosaic/releases/tag/v0.1.0); `dist/` stays out of git.
+Before publishing, the build was changed so no file in the app names the builder's account.
+It had been found in 2,880 files:
+
+- **Compiled bytecode** is now built with bundle-relative paths, forced for every file.
+- **The interpreter's build configuration** has uv's install path replaced with `/install`,
+  in text files only; editing binary files corrupted them.
+- **The shared library's install name** now points inside the bundle.
+- **Console scripts and the project's install-source record** are removed.
+- **A new guard** stops the build if any file still contains the home folder path.
+
+The launcher and the server now pass `-B`, because `-I` makes Python ignore
+`PYTHONDONTWRITEBYTECODE`.
