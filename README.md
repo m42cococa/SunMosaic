@@ -1,11 +1,28 @@
 # SunMosaic
 
-Join partial H-alpha views of the Sun into one full-disk mosaic, from a browser, and save the
-result as a 16-bit TIFF.
+Join partial H-alpha views of the Sun into one full-disk mosaic, then get it ready for editing
+as layers: the solar disk on one layer, the prominences on another, and a mask separating them.
+SunMosaic runs in a browser, from the command line, or as a Mac app, and saves 16-bit TIFFs.
 
 At typical imaging scales the whole solar disk does not fit in one frame, so the Sun is captured
 as several overlapping views, usually four quadrants. SunMosaic aligns them, matches their
 brightness, and blends them into a single seamless disk.
+
+It does not stop at the mosaic. Prominences are far fainter than the disk, so showing them needs
+a much stronger stretch, and a stretch strong enough for them burns out the disk. SunMosaic
+therefore also builds a layered TIFF, as soon as you raise the prominence **Boost** in the app or
+pass `--prominence-boost` on the command line:
+
+| Layer | What it holds |
+| --- | --- |
+| Sun disk (top) | the mosaic, untouched, with a layer mask that shows only the disk plus a 1 px margin, so no part of it is cut |
+| Prominences (bottom) | a brightened copy that reveals the prominences outside the disk, with the glow scattered around the limb removed |
+
+The mask follows the real edge of the disk and blends into the prominence layer over a few
+pixels, so the joint does not show. Affinity Photo opens the file as layers with the mask in
+place, ready to adjust each part separately. Programs without layer support open the combined
+image instead. The details are under
+[Finishing: orientation, prominence layers and mask](#finishing-orientation-prominence-layers-and-mask).
 
 ![The four sample frames joined into one disk](docs/example.png)
 
@@ -162,7 +179,7 @@ Exit status is 0 on success. It is 2 when the frames cannot be joined, for examp
 not overlap, or when an option is out of range. The reason is printed to standard error.
 Run `uv run sunmosaic build --help` for the option list.
 
-## Finishing: orientation and prominences
+## Finishing: orientation, prominence layers and mask
 
 Two optional steps work on the finished mosaic. Leaving their controls alone saves exactly the
 mosaic as built.
@@ -179,8 +196,8 @@ The square is as wide as the mosaic's longer side. With the Sun centred, a few r
 edge of the canvas can fall outside it; on the sample frames that is sky more than 1000 px from
 the Sun centre.
 
-**Prominences.** The **Boost** slider brightens a copy of the image and shows it only outside
-the disk. The disk itself, plus a 1 px margin beyond the measured limb, always comes from the
+**Prominence layers and mask.** The **Boost** slider brightens a copy of the image and shows it
+only outside the disk. The disk itself, plus a 1 px margin beyond the measured limb, always comes from the
 original, so no part of it is cut; a 4 px soft edge outside that margin joins the two.
 
 Light scattered just outside the limb turns into a bright ring and broad arcs under a plain
@@ -201,8 +218,8 @@ The boosted file keeps its layers for further editing:
 | Prominences, boost xN (bottom) | the brightened copy, glow removed if that box was ticked |
 
 The layers use the layered TIFF form that Adobe defined, which is the only one TIFF has.
-Affinity Photo and Krita open it as layers as well as Photoshop. Programs without layer support,
-such as PixInsight, ignore the layers and open the flat image stored in front of them, which is
+Affinity Photo and Krita open it as layers as well as Photoshop. Programs without layer support
+ignore the layers and open the flat image stored in front of them, which is
 exactly what the two layers look like together. Within the 4 px soft edge the mask lets slightly
 more of the brightened copy through wherever the limb is dimmer than the brightened sky, so the
 joint never shows a dark ring. The flat image is non-linear and says so in its metadata, so it is
@@ -240,8 +257,8 @@ that would otherwise fail still assembles.
 
 ## Notes on the output
 
-The saved TIFF is 16-bit and linear. No stretch is applied, so it is ready for ImPPG,
-PixInsight or Affinity Photo. The preview in the browser is stretched for display only.
+The saved TIFF is 16-bit and linear. No stretch is applied, so it is ready for further
+processing in ImPPG or Affinity Photo. The preview in the browser is stretched for display only.
 
 Four frames arranged in a square cover a cross-shaped area, so the corners of the bounding box
 fall outside every frame. Those corners are filled from the nearest real pixels to keep the sky

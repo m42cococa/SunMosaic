@@ -61,7 +61,7 @@ the environment gate in §7.
 | Photometry | Sky pedestal + per-tile multiplicative gain + per-tile sky offset, all solved globally from overlap statistics (MVP); ridge-regularized low-order gain field in phase 3 | Constant gain removes the 8 % steps and offsets remove sky steps that a hard stretch would reveal; multi-band blending hides the residual gradient at the seam. |
 | Blending | Distance-transform seams (Voronoi-like) + Laplacian-pyramid multi-band blend in float32; feather and hard-seam as options | Standard, seam-free, keeps fine H-alpha detail (one tile per pixel at fine scales, no ghosting). |
 | Resampling | Sub-pixel shift with `cv2.warpAffine`, `INTER_CUBIC` default; options `lanczos`, `linear`, `integer` (no resampling) | Cubic keeps stacked detail crisp and rings less than Lanczos at the sharp limb; integer mode for purists. Pixel scale is never changed. |
-| Output | 16-bit TIFF via `tifffile`, linear data (no stretch), same dtype as input, JSON metadata in ImageDescription; 8-bit auto-stretched PNG for display only | Astronomers post-process elsewhere (ImPPG, PixInsight, Photoshop); the mosaic must stay linear. |
+| Output | 16-bit TIFF via `tifffile`, linear data (no stretch), same dtype as input, JSON metadata in ImageDescription; 8-bit auto-stretched PNG for display only | Astronomers post-process elsewhere (ImPPG, Affinity Photo, Photoshop); the mosaic must stay linear. |
 | File selection | Browser uploader (primary) **and** a local folder path field listing `.tif` files (convenience) | Files live on the same machine; both are cheap. |
 | Saving | Download button (primary) **and** optional "save to folder" path field | Download always works; path save avoids the Downloads detour. |
 | Dependencies | numpy, opencv-python-headless, tifffile, imagecodecs, streamlit; dev: pytest, ruff | No scipy/scikit-image: OpenCV covers threshold, contours, distance transform, pyramids, phase correlation; `numpy.linalg.lstsq` covers all solves. |
@@ -859,7 +859,7 @@ and are visible in the raw data under a hard stretch.
     image, and Adobe's ImageSourceData tag (#37724, written with `psdtags`, 16-bit `Lr16`,
     ZIP with prediction) holds two layers. Bottom: the boosted copy. Top: the linear mosaic,
     bit for bit, with a 16-bit layer mask that is 65535 on the disk plus the border. Affinity
-    Photo, Photoshop and Krita read the layers; PixInsight and other plain readers open the
+    Photo, Photoshop and Krita read the layers; readers without layer support open the
     flat image. To keep the top layer an exact copy, the soft-edge lift of change 10 moved
     from the pixels into the mask: where the limb is dimmer than the boosted sky, the mask
     lets through exactly enough more of the boosted copy to give the lifted result (at most

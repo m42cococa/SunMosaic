@@ -47,8 +47,8 @@ uv run python packaging/build_app.py            # dist/SunMosaic.app and the .dm
   the disk because it holds the prominences.
 - Leaving the finishing controls alone writes exactly the mosaic as built.
 - In the prominence output, the disk plus the 1 px border is bit-exact from the linear image.
-- The `_prominences.tif` file stores the flat composite as the normal image, for PixInsight and
-  any plain reader, and the layers in Adobe's ImageSourceData tag, which Affinity Photo reads.
+- The `_prominences.tif` file stores the flat composite as the normal image, for any
+  plain reader, and the layers in Adobe's ImageSourceData tag, which Affinity Photo reads.
   Bottom layer: the boosted copy. Top layer: the linear mosaic with a 16-bit disk mask.
   Recomposing the layers must reproduce the flat image exactly.
 - The linear file stays a plain, flat TIFF.
@@ -81,7 +81,7 @@ uv run python packaging/build_app.py            # dist/SunMosaic.app and the .dm
 
 ## Working with this user
 
-- Image editing happens in Affinity Photo and PixInsight; there is no Photoshop license, so no
+- Image editing happens in Affinity Photo; there is no Photoshop license, so no
   output may depend on Photoshop and nothing can be checked in it.
 - For enhancements, present the plan first. Once it is confirmed, record it in `plan.md`, or in
   the separate file the user names, before executing. Afterwards add as-built notes with the
